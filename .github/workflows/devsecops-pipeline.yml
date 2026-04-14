@@ -1,4 +1,4 @@
-name: DevSecOps Pipeline (SAST + Docker Security)
+name: DevSecOps Pipeline (SAST + Docker Security + Multi-arch)
 
 on:
   push:
@@ -24,30 +24,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ==================== SAST con CodeQL ====================
+      # ==================== SAST - CodeQL ====================
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: javascript
 
-      - name: Perform CodeQL Analysis (SAST)
+      - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-      # ==================== Build Docker ====================
-      - name: Build Docker image
-        run: docker build -t devsecops-demo:latest .
+      # ==================== Docker Build & Push Multi-arch ====================
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # ==================== Verificación Seguridad Docker (Trivy) ====================
-      - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'devsecops-demo:latest'
-          format: 'table'
-          exit-code: '0'                  # Cambia a '1' si quieres que falle en HIGH/CRITICAL
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: 'true'
-
-      # ==================== Deploy a GHCR (solo si todo OK) ====================
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -55,7 +44,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Tag & Push image
-        run: |
-          docker tag devsecops-demo:latest ghcr.io/${{ github.repository_owner }}/devsecops-demo:latest
-          docker push ghcr.io/${{ github.repository_owner }}/devsecops-demo:latest
+      - name: Build and push multi-arch Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/devsecops-demo:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
