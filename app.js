@@ -2,10 +2,19 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 app.get('/', (req, res) => {
   const name = req.query.name || 'World';
-  // ❌ VULNERABILIDAD XSS: input del usuario va directo a HTML sin escapar
-  res.send(`<h1>Hello, ${name}!</h1>`);
+  // ✅ Corregido: sanitizamos la entrada
+  res.send(`<h1>Hello, ${escapeHtml(name)}!</h1>`);
 });
 
 app.listen(port, () => {

@@ -1,6 +1,6 @@
 {
-  "name": "devsecops-demo",
-  "version": "1.0.0",
+  "name": "devsecops-demo-fixed",
+  "version": "1.0.1",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
