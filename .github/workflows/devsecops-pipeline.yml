@@ -36,7 +36,7 @@ jobs:
 
       # ==================== SBOM + SCA ====================
       - name: Generate SBOM (CycloneDX) - npm nativo
-        run: npm sbom --format cyclonedx > sbom.json
+        run: npm sbom --sbom-format cyclonedx > sbom.json
 
       - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v4
@@ -52,7 +52,7 @@ jobs:
           output-format: table
           only-fixed: false
 
-      # ==================== Docker Build & Push (opcional) ====================
+      # ==================== Docker Build & Push ====================
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
