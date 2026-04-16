@@ -1,8 +1,8 @@
-name: DevSecOps Pipeline (SAST + Docker Security + Multi-arch)
+name: DevSecOps Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature/* ]
 
 jobs:
   pipeline:
@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ==================== SAST - CodeQL ====================
+      # SAST - CodeQL
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -33,23 +33,13 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-      # ==================== Docker Build & Push Multi-arch ====================
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # SBOM + SCA
+      - name: Generate SBOM
+        run: npx @cyclonedx/cyclonedx-npm --output-format json --output-file sbom.json .
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Scan vulnerabilities with Grype
+        uses: anchore/scan-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push multi-arch Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/devsecops-demo:latest
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          sbom: sbom.json
+          severity-cutoff: medium
+          output-format: table
