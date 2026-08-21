@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+// Secreto hardcodeado
+const API_KEY = "sk-1234567890abcdef-super-secret-key";
 
 app.get('/', (req, res) => {
   const name = req.query.name || 'World';
